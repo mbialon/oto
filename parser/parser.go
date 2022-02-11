@@ -299,14 +299,16 @@ func (p *Parser) parseMethod(pkg *packages.Package, serviceName string, methodTy
 		return m, errors.Wrap(err, "parse input object type")
 	}
 	outputParams := sig.Results()
-	if outputParams.Len() != 1 {
+	if outputParams.Len() != 0 && outputParams.Len() != 1 {
 		return m, p.wrapErr(errors.New("invalid method signature: expected Method(MethodRequest) MethodResponse"), pkg, methodType.Pos())
 	}
-	m.OutputObject, err = p.parseFieldType(pkg, outputParams.At(0))
-	if err != nil {
-		return m, errors.Wrap(err, "parse output object type")
+	if outputParams.Len() == 1 {
+		m.OutputObject, err = p.parseFieldType(pkg, outputParams.At(0))
+		if err != nil {
+			return m, errors.Wrap(err, "parse output object type")
+		}
+		p.outputObjects[m.OutputObject.TypeName] = struct{}{}
 	}
-	p.outputObjects[m.OutputObject.TypeName] = struct{}{}
 	return m, nil
 }
 
